@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/app_provider.dart';
+import '../providers/app_provider.dart';
 import 'tambah_tugas.dart';
 import 'detail_tugas.dart';
-import 'tugas_model.dart';
+import '../models/tugas_model.dart';
 
 class DashboardPage extends StatelessWidget {
   final Function(int)? onNavigateToTab; // Callback navigasi navbar ke profile

@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/app_provider.dart';
-import 'tugas_model.dart';
+import '../providers/app_provider.dart';
+import '../models/tugas_model.dart';
 
 class DetailTugasPage extends StatefulWidget {
   final Tugas tugas;

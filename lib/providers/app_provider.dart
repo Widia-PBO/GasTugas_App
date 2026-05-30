@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../const.dart';
-import '../tugas_model.dart';
+import '../models/tugas_model.dart';
 
 class AppProvider extends ChangeNotifier {
   List<Tugas> _daftarTugasUtama = [];

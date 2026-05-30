@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
-import 'splash_screen.dart';
-import 'dashboard.dart';
-import 'reminder.dart';
-import 'profile.dart'; // [FIXED] Import file profile yang baru agar bisa dipanggil di bawah
+import 'pages/splash_screen.dart';
+import 'pages/dashboard.dart';
+import 'pages/reminder.dart';
+import 'pages/profile.dart'; // [FIXED] Import file profile yang baru agar bisa dipanggil di bawah
 
 void main() {
   runApp(
