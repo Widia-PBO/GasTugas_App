@@ -25,7 +25,7 @@ class AppProvider extends ChangeNotifier {
   String get prodiUserLoggedIn => _prodiUserLoggedIn;
   bool get isLoading => _isLoading;
 
-  // [MATERI 4: SHARED PREFERENCES] Sinkronisasi Sesi Auto-Login
+  // [MATERI 11: SHARED PREFERENCES] Sinkronisasi Sesi Auto-Login
   Future<void> cekSessionLogin() async {
     final prefs = await SharedPreferences.getInstance();
     _idUserLoggedIn = prefs.getString('id_user') ?? "";
@@ -42,7 +42,9 @@ class AppProvider extends ChangeNotifier {
     notifyListeners(); // Memicu UI Profile memperbarui tampilan saat buka aplikasi
   }
 
-  // [MATERI 3 & 5: ASYNC & HTTP CRUD] Register Teks Bebas Akun Baru
+  // ====================================================================
+  // [MATERI 10 & 12: ASYNC & HTTP CRUD] REVISI LANGKAH 1 - REGISTER USER
+  // ====================================================================
   Future<bool> prosesRegistrasiUser({
     required String nama,
     required String email,
@@ -50,6 +52,9 @@ class AppProvider extends ChangeNotifier {
     required String institusi,
     required String prodi,
   }) async {
+    _isLoading = true;
+    notifyListeners(); // Memicu loading spinner di UI halaman pendaftaran (UX Handling)
+
     try {
       final response = await http.post(
         Uri.parse("${BaseUrl.url}/register.php"),
@@ -63,16 +68,21 @@ class AppProvider extends ChangeNotifier {
       );
       
       final resData = jsonDecode(response.body);
-      if (resData['status'] == true) {
+      
+      // SINKRONISASI: Mengubah dari 'status' ke 'success' sesuai register.php Laragon
+      if (resData['success'] == true) {
         return true;
       }
     } catch (e) {
       debugPrint("Error Proses Registrasi Provider: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners(); // Menghentikan loading spinner (UI tidak freeze - Memenuhi P1)
     }
     return false;
   }
 
-  // [MATERI 3, 4 & 5: ASYNC, HTTP, SP] Login & Menyimpan Sesi Akun
+  // [MATERI 10, 11 & 12: ASYNC, HTTP, SP] Login & Menyimpan Sesi Akun
   Future<Map<String, dynamic>> prosesLogin(
       String email, String password) async {
     try {
@@ -110,7 +120,7 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  // [MATERI 5: CRUD - READ] Ambil Data Tugas User dari MySQL
+  // [MATERI 12: CRUD - READ] Ambil Data Tugas User dari MySQL
   Future<void> ambilDataTugasDariMysql() async {
     if (_idUserLoggedIn.isEmpty) return;
     _isLoading = true;
@@ -133,7 +143,7 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  // [MATERI 5: CRUD - CREATE] Tambah Tugas Baru ke MySQL
+  // [MATERI 12: CRUD - CREATE] Tambah Tugas Baru ke MySQL
   Future<bool> tambahTugasBaru(
       String presidential, String matkul, String deadline, String deskripsi) async {
     try {
@@ -149,7 +159,7 @@ class AppProvider extends ChangeNotifier {
       );
       final resData = jsonDecode(response.body);
       if (resData['status'] == true) {
-        await ambilDataTugasDariMysql(); // FIXED TOTAL: Sisa kode pref yang typo & merusak sistem sudah dibuang bersih!
+        await ambilDataTugasDariMysql(); 
         return true;
       }
     } catch (e) {
@@ -158,7 +168,7 @@ class AppProvider extends ChangeNotifier {
     return false;
   }
 
-  // [MATERI 5: CRUD - UPDATE] Edit Semua Field Tugas Kuliah
+  // [MATERI 12: CRUD - UPDATE] Edit Semua Field Tugas Kuliah
   Future<bool> perbaruiDataTugas({
     required String idTugas,
     required String judul,
@@ -190,7 +200,7 @@ class AppProvider extends ChangeNotifier {
     return false;
   }
 
-  // [MATERI 5: CRUD - DELETE PERMANEN]
+  // [MATERI 12: CRUD - DELETE PERMANEN]
   Future<bool> hapusTugasPermanen(String idTugas) async {
     try {
       final response = await http.post(
@@ -208,7 +218,7 @@ class AppProvider extends ChangeNotifier {
     return false;
   }
 
-  // [MATERI 5: CRUD - DELETE ORIGINAL / SELESAI] Bawaan Proyek Awal Kamu
+  // [MATERI 12: CRUD - DELETE ORIGINAL / SELESAI] Bawaan Proyek Awal Kamu
   Future<bool> tandaiTugasSelesai(String idTugas) async {
     try {
       final response = await http.post(
