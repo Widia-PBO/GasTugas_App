@@ -2,13 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    // 2. "Jaring Pengaman": Memastikan data di-refresh saat halaman dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppProvider>().cekSessionLogin();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     // [MATERI: PROVIDER GLOBAL STATE MANAGEMENT] Sinkronisasi data secara real-time
     final provider = context.watch<AppProvider>();
+
+    // TAMBAHKAN BARIS INI untuk cek di Debug Console VS Code
+    debugPrint("DEBUG PROFIL - Nama: ${provider.namaUserLoggedIn}");
+    debugPrint("DEBUG PROFIL - Institusi: ${provider.institusiUserLoggedIn}");
+    debugPrint("DEBUG PROFIL - Prodi: ${provider.prodiUserLoggedIn}");
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFF), // Putih keunguan super clean
@@ -18,14 +37,16 @@ class ProfilePage extends StatelessWidget {
             // --- 1. PREMIUM GRADIENT HEADER CANVAS WITH AVATAR (COMPACT CLEAN VERSION) ---
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.only(top: 65, bottom: 30), // Padding disesuaikan agar lebih ringkas & pas
+              padding: const EdgeInsets.only(
+                  top: 65,
+                  bottom: 30), // Padding disesuaikan agar lebih ringkas & pas
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFFF3EFFF), 
-                    Color(0xFFEBE5FF), 
+                    Color(0xFFF3EFFF),
+                    Color(0xFFEBE5FF),
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -52,48 +73,63 @@ class ProfilePage extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
-                        color: Color(0xFF7B3FF2), 
+                        color: Color(0xFF7B3FF2),
                         shape: BoxShape.circle,
                       ),
                       child: CircleAvatar(
                         radius: 44,
                         backgroundColor: Colors.white,
                         child: Text(
-                          provider.namaUserLoggedIn.isNotEmpty 
-                              ? provider.namaUserLoggedIn[0].toUpperCase() 
+                          provider.namaUserLoggedIn.isNotEmpty
+                              ? provider.namaUserLoggedIn[0].toUpperCase()
                               : 'U',
-                          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF7B3FF2)),
+                          style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF7B3FF2)),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 14),
-                  
+
                   // Nama Besar Pengguna
                   Text(
-                    provider.namaUserLoggedIn.isNotEmpty ? provider.namaUserLoggedIn : "User GasTugas",
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF2D2543), letterSpacing: -0.5),
+                    provider.namaUserLoggedIn.isNotEmpty
+                        ? provider.namaUserLoggedIn
+                        : "User GasTugas",
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF2D2543),
+                        letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 6),
-                  
+
                   // Email Badge Minimalis
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      provider.emailUserLoggedIn.isNotEmpty ? provider.emailUserLoggedIn : "mahasiswa@polindra.ac.id",
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF7B3FF2), fontWeight: FontWeight.w600),
+                      provider.emailUserLoggedIn.isNotEmpty
+                          ? provider.emailUserLoggedIn
+                          : "mahasiswa@polindra.ac.id",
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF7B3FF2),
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             // --- 2. DETAIL ACCOUNT CARD SECTION ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -104,14 +140,19 @@ class ProfilePage extends StatelessWidget {
                     padding: EdgeInsets.only(left: 6, bottom: 12),
                     child: Text(
                       'INFORMASI AKADEMIK & AKUN',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.black38, letterSpacing: 1.0),
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black38,
+                          letterSpacing: 1.0),
                     ),
                   ),
-                  
+
                   // Card Konten Utama Tunggal yang Clean & Lembut
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
@@ -126,27 +167,33 @@ class ProfilePage extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildIdentityRow(Icons.person_outline_rounded, 'Nama Lengkap', provider.namaUserLoggedIn),
+                        _buildIdentityRow(Icons.person_outline_rounded,
+                            'Nama Lengkap', provider.namaUserLoggedIn),
                         _buildCustomDivider(),
-                        _buildIdentityRow(Icons.email_outlined, 'Alamat Email', provider.emailUserLoggedIn),
+                        _buildIdentityRow(Icons.email_outlined, 'Alamat Email',
+                            provider.emailUserLoggedIn),
                         _buildCustomDivider(),
                         _buildIdentityRow(
-                          Icons.school_outlined, 
-                          'Institusi / Kampus', 
-                          provider.institusiUserLoggedIn.isNotEmpty ? provider.institusiUserLoggedIn : "-",
+                          Icons.school_outlined,
+                          'Institusi / Kampus',
+                          provider.institusiUserLoggedIn.isNotEmpty
+                              ? provider.institusiUserLoggedIn
+                              : "-",
                         ),
                         _buildCustomDivider(),
                         _buildIdentityRow(
-                          Icons.badge_outlined, 
-                          'Program Studi', 
-                          provider.prodiUserLoggedIn.isNotEmpty ? provider.prodiUserLoggedIn : "-",
+                          Icons.badge_outlined,
+                          'Program Studi',
+                          provider.prodiUserLoggedIn.isNotEmpty
+                              ? provider.prodiUserLoggedIn
+                              : "-",
                         ),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 35),
-                  
+
                   // --- 3. ERGONOMIS LOGOUT ACTION BUTTON ---
                   SizedBox(
                     width: double.infinity,
@@ -162,8 +209,9 @@ class ProfilePage extends StatelessWidget {
                       ),
                       onPressed: () {
                         // [MATERI: SHARED PREFERENCES RESET SESI]
-                        provider.prosesLogout();
-                        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                        provider.prosesLogout(context);
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/', (route) => false);
                       },
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -171,8 +219,11 @@ class ProfilePage extends StatelessWidget {
                           Icon(Icons.logout_outlined, size: 20),
                           SizedBox(width: 8),
                           Text(
-                            "LOGOUT", 
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.2),
+                            "LOGOUT",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                letterSpacing: 0.2),
                           ),
                         ],
                       ),
@@ -213,13 +264,20 @@ class ProfilePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label, 
-                  style: const TextStyle(fontSize: 11, color: Colors.black38, fontWeight: FontWeight.w700, letterSpacing: 0.3),
+                  label,
+                  style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.black38,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   value.isNotEmpty ? value : "-",
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF352E4B)),
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF352E4B)),
                 ),
               ],
             ),

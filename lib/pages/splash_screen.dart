@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
+import '../main.dart'; 
 import 'login.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -15,9 +19,29 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _jalankanSplash() async {
+    // Memberikan durasi splash screen 3 detik
     await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+    
+    if (!mounted) return;
+
+    final provider = context.read<AppProvider>();
+
+    // Memuat data sesi (ID, Nama, dll) dari SharedPreferences
+    await provider.cekSessionLogin();
+
+    if (!mounted) return;
+
+    // Cek apakah user sudah memiliki sesi aktif
+    if (provider.isUserLoggedIn) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavigation()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
     }
   }
 
@@ -26,7 +50,24 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Image.asset('assets/logo.png', width: 220, errorBuilder: (c, e, s) => const Icon(Icons.book_rounded, size: 100, color: Color(0xFF7B3FF2))),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/logo.png', 
+              width: 220,
+              errorBuilder: (c, e, s) => const Icon(
+                Icons.book_rounded, 
+                size: 100, 
+                color: Color(0xFF7B3FF2),
+              ),
+            ),
+            const SizedBox(height: 25),
+            const CircularProgressIndicator(
+              color: Color(0xFF7B3FF2),
+            ),
+          ],
+        ),
       ),
     );
   }

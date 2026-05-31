@@ -149,42 +149,93 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
   void _tampilkanDialogHapus(BuildContext context, AppProvider provider) {
     showDialog(
       context: context,
+      barrierDismissible: true, // Bisa ditutup dengan klik area luar
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Hapus Permanen?',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text(
-              'Apakah kamu yakin ingin menghapus tugas ini secara permanen dari database Laragon?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                bool sukses =
-                    await provider.hapusTugasPermanen(widget.tugas.idTugas);
-                if (context.mounted) {
-                  if (sukses) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content:
-                              Text("Tugas berhasil dihapus permanen! 🗑️")),
-                    );
-                    Navigator.pop(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Gagal menghapus tugas.")),
-                    );
-                  }
-                }
-              },
-              child: const Text('Ya, Hapus',
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ikon Sampah dengan background soft red
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF1F1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.delete_outline_rounded,
+                      color: Color(0xFFFF4B4B), size: 32),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Hapus Permanen?',
                   style: TextStyle(
-                      color: Colors.red, fontWeight: FontWeight.bold)),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D2543)),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Apakah kamu yakin ingin menghapus tugas ini secara permanen dari database?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 14, color: Colors.black54, height: 1.4),
+                ),
+                const SizedBox(height: 24),
+
+                // Tombol Batal & Hapus
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          foregroundColor: Colors.black45,
+                        ),
+                        child: const Text("Batal",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF4B4B),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(dialogContext); // Tutup dialog
+                          bool sukses = await provider
+                              .hapusTugasPermanen(widget.tugas.idTugas);
+                          if (context.mounted) {
+                            if (sukses) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text("Tugas berhasil dihapus! 🗑️")),
+                              );
+                              Navigator.pop(context); // Kembali ke dashboard
+                            }
+                          }
+                        },
+                        child: const Text("Ya, Hapus",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -409,8 +460,8 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
                           elevation: 0,
                         ),
                         onPressed: () async {
-                          bool sukses = await provider
-                              .tandaiTugasSelesai(widget.tugas.idTugas);
+                          bool sukses =
+                              await provider.tandaiTugasSelesai(widget.tugas);
                           if (context.mounted) {
                             if (sukses) {
                               final random = Random();

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/auth_provider.dart'; // Import AuthProvider
 import '../main.dart';
 import 'register.dart';
 
@@ -12,13 +13,9 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // [MATERI 12: FORM VALIDATION KEY] Kunci pengontrol validasi input massal
   final _formLoginKey = GlobalKey<FormState>();
-  
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _passCtrl = TextEditingController();
-
-  // State untuk mengontrol visibilitas password (lihat/sembunyi)
   bool _obscurePassword = true;
 
   @override
@@ -30,78 +27,65 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Membaca instance AppProvider (Materi 13)
     final provider = context.read<AppProvider>();
+    final authProvider = context.read<AuthProvider>(); // Ambil AuthProvider
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Form(
-          key: _formLoginKey, // Bungkus Column dengan widget Form
+          key: _formLoginKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Gaya rata kiri clean
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 100),
               Center(
-                  child: Image.asset('assets/logo.png',
-                      width: 230,
-                      errorBuilder: (c, e, s) => const Icon(Icons.book_rounded,
-                          size: 90, color: Color(0xFF7B3FF2)))),
+                child: Image.asset('assets/logo.png',
+                    width: 230,
+                    errorBuilder: (c, e, s) => const Icon(Icons.book_rounded,
+                        size: 90, color: Color(0xFF7B3FF2))),
+              ),
               const SizedBox(height: 40),
-              const Text('Login',
+              const Text('Masuk',
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF7B3FF2))),
               const SizedBox(height: 20),
 
-              // 1. Kolom Input Email dengan Validasi Otomatis (Materi 12)
+              // Email
               TextFormField(
                 controller: _emailCtrl,
-                decoration: _buildInputDecoration('Email Address', Icons.email),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Alamat email tidak boleh kosong! ⚠️';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Format alamat email tidak valid! ⚠️';
-                  }
-                  return null;
-                },
+                decoration: _buildInputDecoration('Alamat Email', Icons.email),
+                validator: (val) => (val == null || !val.contains('@'))
+                    ? 'Email tidak valid'
+                    : null,
               ),
               const SizedBox(height: 15),
 
-              // 2. Kolom Input Password dengan Validasi & Fitur Toggle Lihat/Sembunyi
+              // Password
               TextFormField(
                 controller: _passCtrl,
                 obscureText: _obscurePassword,
-                decoration: _buildInputDecoration('Password', Icons.lock).copyWith(
+                decoration:
+                    _buildInputDecoration('Kata sandi', Icons.lock).copyWith(
                   suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_rounded
-                          : Icons.visibility_rounded,
-                      color: const Color(0xFF7B3FF2).withValues(alpha: 0.6),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
+                    icon: Icon(_obscurePassword
+                        ? Icons.visibility_off
+                        : Icons.visibility),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Password wajib diisi! ⚠️';
-                  }
-                  return null;
-                },
+                validator: (val) => (val == null || val.isEmpty)
+                    ? 'Password wajib diisi'
+                    : null,
               ),
 
               const SizedBox(height: 35),
 
-              // 3. Tombol Masuk / Login Terintegrasi Sesi Shared Preferences & Async-Await (Materi 10 & 11)
+              // Tombol Masuk Manual
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -111,44 +95,78 @@ class _LoginPageState extends State<LoginPage> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10))),
                   onPressed: () async {
-                    // Memicu validasi form internal sebelum menembak API Laragon
                     if (_formLoginKey.currentState!.validate()) {
-                      
-                      // Mengirim request data secara Asynchronous (Materi 10)
                       final res = await provider.prosesLogin(
                           _emailCtrl.text.trim(), _passCtrl.text.trim());
-                      
                       if (!context.mounted) return;
-                      
-                      // Jika status bernilai true (Login berhasil & Sesi SPREF terkunci)
                       if (res['status'] == true) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Login Berhasil! Selamat datang kembali. 👋")),
-                        );
-                        
-                        // Masuk ke halaman utama dashboard & hapus tumpukan halaman login (Materi 09)
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => const MainNavigation()));
                       } else {
-                        // Memunculkan SnackBar pesan error dinamis kiriman login.php Laragon (Misal: Password salah!)
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(res['message'] ?? "Gagal masuk.")));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(res['message'] ?? "Gagal masuk")));
                       }
                     }
                   },
                   child: const Text('Masuk',
                       style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
+                          color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
 
-              const SizedBox(height: 35),
+              const SizedBox(height: 20),
+              const Center(child: Text("atau")),
+              const SizedBox(height: 20),
 
-              // 4. Baris Navigasi beralih ke halaman Daftar
+              // TOMBOL LANJUTKAN DENGAN GOOGLE (BARU)
+              // TOMBOL LANJUTKAN DENGAN GOOGLE
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    // 1. Jalankan proses autentikasi
+                    final authResult = await authProvider.authenticate(
+                        context: context, isGoogle: true, isRegister: false);
+
+                    // Cek apakah layar masih aktif setelah proses async (await) pertama
+                    if (!context.mounted) return;
+
+                    // 2. Cek apakah user berhasil login dari hasil auth (bisa cek status atau currentUser)
+                    if (authProvider.currentUser != null) {
+                      // 3. Tarik data user ke AppProvider
+                      await context.read<AppProvider>().cekSessionLogin();
+
+                      // Cek lagi apakah layar masih aktif sebelum pindah halaman
+                      if (!context.mounted) return;
+
+                      // 4. Pindah ke MainNavigation
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MainNavigation()),
+                      );
+                    } else {
+                      // Beri feedback jika login gagal
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                authResult['message'] ?? "Login Google Gagal")),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.login, color: Color(0xFF7B3FF2)),
+                  label: const Text("Lanjutkan dengan Google"),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF7B3FF2)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 35),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -158,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const RegisterPage())),
-                    child: const Text('Daftar',
+                    child: const Text('Daftar Sekarang',
                         style: TextStyle(
                             color: Color(0xFF7B3FF2),
                             fontWeight: FontWeight.bold)),
@@ -172,27 +190,17 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Desain dasar tema input dekorasi terpusat (Materi 08)
   InputDecoration _buildInputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: const Color(0xFF7B3FF2).withValues(alpha: 0.4)),
       prefixIcon: Icon(icon, color: const Color(0xFF7B3FF2)),
       filled: true,
       fillColor: const Color(0xFFF3EFFF),
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF7B3FF2), width: 1.5)),
-      errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1)),
-      focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
+          borderSide: const BorderSide(color: Color(0xFF7B3FF2))),
     );
   }
 }

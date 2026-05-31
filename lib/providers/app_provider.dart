@@ -2,49 +2,48 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../const.dart';
 import '../models/tugas_model.dart';
+import 'auth_provider.dart';
 
 class AppProvider extends ChangeNotifier {
   List<Tugas> _daftarTugasUtama = [];
   String _idUserLoggedIn = "";
   String _namaUserLoggedIn = "";
   String _emailUserLoggedIn = "";
-  
-  // Menampung data teks bebas profil institusi dan prodi
   String _institusiUserLoggedIn = "";
   String _prodiUserLoggedIn = "";
   bool _isLoading = false;
 
+  // Getters
   List<Tugas> get daftarTugasUtama => _daftarTugasUtama;
   String get namaUserLoggedIn => _namaUserLoggedIn;
   String get emailUserLoggedIn => _emailUserLoggedIn;
-  
-  // Getters untuk dibaca langsung oleh ProfilePage
   String get institusiUserLoggedIn => _institusiUserLoggedIn;
   String get prodiUserLoggedIn => _prodiUserLoggedIn;
   bool get isLoading => _isLoading;
+  bool get isUserLoggedIn => _idUserLoggedIn.isNotEmpty;
 
-  // [MATERI 11: SHARED PREFERENCES] Sinkronisasi Sesi Auto-Login
+  // --- 1. MANAJEMEN SESI ---
+  // Di dalam file providers/app_provider.dart
   Future<void> cekSessionLogin() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Ambil data dengan kunci yang sama persis seperti saat Login
     _idUserLoggedIn = prefs.getString('id_user') ?? "";
     _namaUserLoggedIn = prefs.getString('nama') ?? "";
     _emailUserLoggedIn = prefs.getString('email') ?? "";
-    
-    // Memuat data institusi dan prodi yang tersimpan di memori HP
-    _institusiUserLoggedIn = prefs.getString('institusi') ?? "";
-    _prodiUserLoggedIn = prefs.getString('prodi') ?? "";
 
-    if (_idUserLoggedIn.isNotEmpty) {
-      await ambilDataTugasDariMysql();
-    }
-    notifyListeners(); // Memicu UI Profile memperbarui tampilan saat buka aplikasi
+    // Tambahkan fallback jika data di prefs masih kosong/null
+    _institusiUserLoggedIn =
+        prefs.getString('institusi') ?? "Politeknik Negeri Indramayu";
+    _prodiUserLoggedIn = prefs.getString('prodi') ?? "Sistem Informasi";
+
+    notifyListeners(); // Memberi tahu UI untuk memperbarui tampilan
   }
 
-  // ====================================================================
-  // [MATERI 10 & 12: ASYNC & HTTP CRUD] REVISI LANGKAH 1 - REGISTER USER
-  // ====================================================================
+  // --- 2. AUTHENTICATION (REGISTER & LOGIN) ---
   Future<bool> prosesRegistrasiUser({
     required String nama,
     required String email,
@@ -53,7 +52,7 @@ class AppProvider extends ChangeNotifier {
     required String prodi,
   }) async {
     _isLoading = true;
-    notifyListeners(); // Memicu loading spinner di UI halaman pendaftaran (UX Handling)
+    notifyListeners();
 
     try {
       final response = await http.post(
@@ -62,65 +61,68 @@ class AppProvider extends ChangeNotifier {
           "nama": nama,
           "email": email,
           "password": password,
-          "institusi": institusi, 
-          "prodi": prodi,         
+          "institusi": institusi,
+          "prodi": prodi,
         },
       );
-      
+
       final resData = jsonDecode(response.body);
-      
-      // SINKRONISASI: Mengubah dari 'status' ke 'success' sesuai register.php Laragon
-      if (resData['success'] == true) {
-        return true;
-      }
+      // REVISI: Menggunakan 'status' sesuai dengan register.php
+      return resData['status'] == true;
     } catch (e) {
       debugPrint("Error Proses Registrasi Provider: $e");
+      return false;
     } finally {
       _isLoading = false;
-      notifyListeners(); // Menghentikan loading spinner (UI tidak freeze - Memenuhi P1)
+      notifyListeners();
     }
-    return false;
   }
 
-  // [MATERI 10, 11 & 12: ASYNC, HTTP, SP] Login & Menyimpan Sesi Akun
   Future<Map<String, dynamic>> prosesLogin(
       String email, String password) async {
     try {
+      // 1. Panggil API Login
       final response = await http.post(
         Uri.parse("${BaseUrl.url}/login.php"),
         body: {"email": email, "password": password},
       );
+
+      // 2. Decode response dari PHP
       final resData = jsonDecode(response.body);
 
       if (resData['status'] == true) {
-        final prefs = await SharedPreferences.getInstance();
-        _idUserLoggedIn = resData['data']['id_user'].toString();
-        _namaUserLoggedIn = resData['data']['nama'];
-        _emailUserLoggedIn = resData['data']['email'];
-        
-        // Catch data objek user dari database Laragon/MySQL kamu
-        _institusiUserLoggedIn = resData['data']['institusi'] ?? "";
-        _prodiUserLoggedIn = resData['data']['prodi'] ?? "";
+        final data = resData['data'];
 
+        // 3. Update Variabel Lokal Provider
+        _idUserLoggedIn = data['id_user']?.toString() ?? "";
+        _namaUserLoggedIn = data['nama']?.toString() ?? "User";
+        _emailUserLoggedIn = data['email']?.toString() ?? email;
+        _institusiUserLoggedIn =
+            data['institusi']?.toString() ?? "Politeknik Negeri Indramayu";
+        _prodiUserLoggedIn = data['prodi']?.toString() ?? "Sistem Informasi";
+
+        // 4. Sinkronisasi ke SharedPreferences (Persistent Storage)
+        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('id_user', _idUserLoggedIn);
         await prefs.setString('nama', _namaUserLoggedIn);
         await prefs.setString('email', _emailUserLoggedIn);
-        
-        // Simpan ke SharedPreferences HP agar saat aplikasi ditutup data tidak hilang
         await prefs.setString('institusi', _institusiUserLoggedIn);
         await prefs.setString('prodi', _prodiUserLoggedIn);
 
+        // 5. Ambil data tugas segera agar dashboard tidak kosong
         await ambilDataTugasDariMysql();
-        
-        notifyListeners(); // sinkronisasi state data akun ke profil secara real-time
+
+        // 6. Notifikasi UI bahwa data telah berubah
+        notifyListeners();
       }
-      return resData;
+
+      return Map<String, dynamic>.from(resData);
     } catch (e) {
+      debugPrint("Error Login: $e");
       return {"status": false, "message": "Gagal terhubung ke server"};
     }
   }
 
-  // [MATERI 12: CRUD - READ] Ambil Data Tugas User dari MySQL
   Future<void> ambilDataTugasDariMysql() async {
     if (_idUserLoggedIn.isEmpty) return;
     _isLoading = true;
@@ -129,11 +131,13 @@ class AppProvider extends ChangeNotifier {
     try {
       final response = await http.get(Uri.parse(
           "${BaseUrl.url}/tugas.php?aksi=read&id_user=$_idUserLoggedIn"));
-      final resData = jsonDecode(response.body);
 
-      if (resData['status'] == true) {
-        final List dataMentah = resData['data'];
-        _daftarTugasUtama = dataMentah.map((e) => Tugas.fromJson(e)).toList();
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        if (resData['status'] == true) {
+          final List dataMentah = resData['data'];
+          _daftarTugasUtama = dataMentah.map((e) => Tugas.fromJson(e)).toList();
+        }
       }
     } catch (e) {
       debugPrint("Error Ambil Data: $e");
@@ -143,23 +147,23 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  // [MATERI 12: CRUD - CREATE] Tambah Tugas Baru ke MySQL
   Future<bool> tambahTugasBaru(
-      String presidential, String matkul, String deadline, String deskripsi) async {
+      String judul, String matkul, String deadline, String deskripsi) async {
     try {
       final response = await http.post(
         Uri.parse("${BaseUrl.url}/tugas.php?aksi=create"),
         body: {
           "id_user": _idUserLoggedIn,
-          "judul": presidential,
+          "judul": judul,
           "mata_kuliah": matkul,
           "deadline": deadline,
-          "deskripsi": deskripsi
+          "deskripsi": deskripsi,
+          "status": "Belum dikerjakan" // Kirimkan status default
         },
       );
       final resData = jsonDecode(response.body);
       if (resData['status'] == true) {
-        await ambilDataTugasDariMysql(); 
+        await ambilDataTugasDariMysql();
         return true;
       }
     } catch (e) {
@@ -168,7 +172,6 @@ class AppProvider extends ChangeNotifier {
     return false;
   }
 
-  // [MATERI 12: CRUD - UPDATE] Edit Semua Field Tugas Kuliah
   Future<bool> perbaruiDataTugas({
     required String idTugas,
     required String judul,
@@ -200,7 +203,6 @@ class AppProvider extends ChangeNotifier {
     return false;
   }
 
-  // [MATERI 12: CRUD - DELETE PERMANEN]
   Future<bool> hapusTugasPermanen(String idTugas) async {
     try {
       final response = await http.post(
@@ -218,12 +220,18 @@ class AppProvider extends ChangeNotifier {
     return false;
   }
 
-  // [MATERI 12: CRUD - DELETE ORIGINAL / SELESAI] Bawaan Proyek Awal Kamu
-  Future<bool> tandaiTugasSelesai(String idTugas) async {
+  Future<bool> tandaiTugasSelesai(Tugas tgs) async {
     try {
       final response = await http.post(
-        Uri.parse("${BaseUrl.url}/tugas.php?aksi=delete"),
-        body: {"id_tugas": idTugas},
+        Uri.parse("${BaseUrl.url}/tugas.php?aksi=update"),
+        body: {
+          "id_tugas": tgs.idTugas,
+          "judul": tgs.judul,
+          "mata_kuliah": tgs.mataKuliah,
+          "deadline": tgs.deadline,
+          "deskripsi": tgs.deskripsi,
+          "status": "Selesai"
+        },
       );
       final resData = jsonDecode(response.body);
       if (resData['status'] == true) {
@@ -231,15 +239,43 @@ class AppProvider extends ChangeNotifier {
         return true;
       }
     } catch (e) {
-      debugPrint("Error Delete: $e");
+      debugPrint("Error Selesai Tugas: $e");
     }
     return false;
   }
 
-  // Logout & Bersihkan Sesi SPREF
-  Future<void> prosesLogout() async {
+  // Tambahkan fungsi ini di AppProvider.dart
+  Future<void> fetchProfilDariMysql(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+            "${BaseUrl.url}/login.php"), // Bisa pakai file login yang sama
+        body: {
+          "email": email
+        }, // Pastikan login.php bisa mengembalikan data user by email
+      );
+
+      final resData = jsonDecode(response.body);
+      if (resData['status'] == true) {
+        final data = resData['data'];
+        _institusiUserLoggedIn = data['institusi'];
+        _prodiUserLoggedIn = data['prodi'];
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('institusi', _institusiUserLoggedIn);
+        await prefs.setString('prodi', _prodiUserLoggedIn);
+
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error Fetch Profil: $e");
+    }
+  }
+
+  Future<void> prosesLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+
     _daftarTugasUtama.clear();
     _idUserLoggedIn = "";
     _namaUserLoggedIn = "";
@@ -247,5 +283,8 @@ class AppProvider extends ChangeNotifier {
     _institusiUserLoggedIn = "";
     _prodiUserLoggedIn = "";
     notifyListeners();
+
+    if (!context.mounted) return;
+    await Provider.of<AuthProvider>(context, listen: false).signOut();
   }
 }

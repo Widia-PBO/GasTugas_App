@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gastugas_app/models/tugas_model.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'tambah_tugas.dart';
@@ -10,7 +11,16 @@ class ReminderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // [MATERI: PROVIDER GLOBAL STATE MANAGEMENT] Sinkronisasi state daftar tugas secara terpusat
+    // 1. Di dalam method build, ambil data yang sudah difilter
     final provider = context.watch<AppProvider>();
+
+// Kita ambil semua tugas yang statusnya BUKAN 'selesai'
+    final List<Tugas> daftarReminder = provider.daftarTugasUtama
+        .where((t) => t.status.toLowerCase() != 'selesai')
+        .toList();
+
+// 2. Gunakan 'daftarReminder' di ListView.builder kamu
+    // Tambahkan fungsi ini agar error hilang
 
     return Scaffold(
       backgroundColor:
@@ -72,7 +82,8 @@ class ReminderPage extends StatelessWidget {
             // KONTEN UTAMA: DAFTAR LIST REMINDER DENGAN ISI CARD LENGKAP DATA ASLI
             // ====================================================================
             Expanded(
-              child: provider.daftarTugasUtama.isEmpty
+              child: daftarReminder
+                      .isEmpty // 1. Gunakan daftarReminder hasil filter
                   ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -80,23 +91,23 @@ class ReminderPage extends StatelessWidget {
                           Icon(Icons.alarm_off_rounded,
                               color: Colors.black26, size: 44),
                           SizedBox(height: 12),
-                          Text(
-                            'Belum ada alarm reminder aktif.',
-                            style: TextStyle(
-                                color: Colors.black38,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500),
-                          ),
+                          Text('Belum ada alarm reminder aktif.',
+                              style: TextStyle(
+                                  color: Colors.black38,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500)),
                         ],
                       ),
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: provider.daftarTugasUtama.length,
+                      itemCount: daftarReminder
+                          .length, // 2. Gunakan length dari daftarReminder
                       itemBuilder: (context, index) {
-                        final item = provider.daftarTugasUtama[index];
+                        final item = daftarReminder[
+                            index]; // 3. Ambil item dari daftarReminder
 
-                        // Logika warna badge status dinamis sesuai database Laragon
+                        // (Logika statusTextColor dan statusBgColor kamu tetap sama di sini)
                         Color statusTextColor =
                             item.status.toLowerCase() == 'sedang dikerjakan'
                                 ? const Color(0xFF2196F3)
@@ -120,100 +131,51 @@ class ReminderPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(16),
                               border:
                                   Border.all(color: const Color(0xFFECE9F5)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.01),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                )
-                              ],
                             ),
                             child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // Ikon Notifikasi Ungu Lembut di Kiri Card
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF3EFFF),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(Icons.alarm_on_rounded,
-                                      color: Color(0xFF7B3FF2), size: 22),
-                                ),
+                                const Icon(Icons.alarm_on_rounded,
+                                    color: Color(0xFF7B3FF2), size: 22),
                                 const SizedBox(width: 16),
-
-                                // Informasi Data Tugas Kuliah secara Lengkap
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // A. Judul Tugas
-                                      Text(
-                                        item.judul,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                            color: Color(0xFF2D2543)),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                      Text(item.judul,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                              color: Color(0xFF2D2543))),
                                       const SizedBox(height: 4),
-
-                                      // B. Mata Kuliah & Kapsul Badge Status Asli Data
+                                      // (Badge status dan Deadline tetap sama seperti kodinganmu)
                                       Row(
                                         children: [
-                                          Text(
-                                            item.mataKuliah,
-                                            style: const TextStyle(
-                                                color: Colors.black45,
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.bold),
-                                          ),
+                                          Text(item.mataKuliah,
+                                              style: const TextStyle(
+                                                  color: Colors.black45,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.bold)),
                                           const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 6, vertical: 1.5),
                                             decoration: BoxDecoration(
-                                              color: statusBgColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              item.status,
-                                              style: TextStyle(
-                                                color: statusTextColor,
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-
-                                      // C. Tanggal Batas Waktu (Deadline)
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                              Icons.calendar_month_rounded,
-                                              size: 13,
-                                              color: Color(0xFF7B3FF2)),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            "Deadline: ${item.deadline}",
-                                            style: const TextStyle(
-                                                color: Color(0xFF7B3FF2),
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.bold),
+                                                color: statusBgColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(6)),
+                                            child: Text(item.status,
+                                                style: TextStyle(
+                                                    color: statusTextColor,
+                                                    fontSize: 9,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
                                           ),
                                         ],
                                       ),
                                     ],
                                   ),
                                 ),
-
                                 const Icon(Icons.chevron_right_rounded,
                                     color: Colors.black26, size: 20),
                               ],

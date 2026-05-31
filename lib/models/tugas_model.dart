@@ -1,5 +1,6 @@
 class Tugas {
   final String idTugas;
+  final String idUser; // Tambahkan ini agar sinkron dengan database
   final String judul;
   final String mataKuliah;
   final String deadline;
@@ -8,6 +9,7 @@ class Tugas {
 
   Tugas({
     required this.idTugas,
+    required this.idUser,
     required this.judul,
     required this.mataKuliah,
     required this.deadline,
@@ -15,10 +17,12 @@ class Tugas {
     required this.status,
   });
 
-  // [MATERI 5: CRUD & JSON MAPPING] Konversi data JSON database MySQL ke Objek Dart
+  // [MATERI 5: CRUD & JSON MAPPING] 
+  // Pastikan key di dalam json['...'] sama persis dengan nama kolom di database MySQL
   factory Tugas.fromJson(Map<String, dynamic> json) {
     return Tugas(
-      idTugas: json['id_tugas'].toString(),
+      idTugas: json['id_tugas']?.toString() ?? '',
+      idUser: json['id_user']?.toString() ?? '', // Pastikan ini terambil
       judul: json['judul'] ?? '',
       mataKuliah: json['mata_kuliah'] ?? '',
       deadline: json['deadline'] ?? '',

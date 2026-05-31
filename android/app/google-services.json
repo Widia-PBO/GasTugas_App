@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "436700117953",
+    "project_id": "gastugas-f9039",
+    "storage_bucket": "gastugas-f9039.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436700117953:android:b07c22011a4272c3d2cd40",
+        "android_client_info": {
+          "package_name": "com.example.gastugas_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "436700117953-vkmt7vlkgg80nksvt6l5sj3pe4i3v61h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gastugas_app",
+            "certificate_hash": "f5a694e352da9b291f22f22bf0fb3ef865a34edd"
+          }
+        },
+        {
+          "client_id": "436700117953-96lhabeub0hevf1vlhi4i6g5c80lsiu8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDMqPOu66qrVsCH9DivispJqSXnB8FMeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "436700117953-96lhabeub0hevf1vlhi4i6g5c80lsiu8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
