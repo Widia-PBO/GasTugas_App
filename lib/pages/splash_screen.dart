@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
-import '../main.dart'; 
+import '../main.dart';
 import 'login.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -19,19 +19,11 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _jalankanSplash() async {
-    // Memberikan durasi splash screen 3 detik
     await Future.delayed(const Duration(seconds: 3));
-    
     if (!mounted) return;
-
     final provider = context.read<AppProvider>();
-
-    // Memuat data sesi (ID, Nama, dll) dari SharedPreferences
     await provider.cekSessionLogin();
-
     if (!mounted) return;
-
-    // Cek apakah user sudah memiliki sesi aktif
     if (provider.isUserLoggedIn) {
       Navigator.pushReplacement(
         context,
@@ -39,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
       );
     } else {
       Navigator.pushReplacement(
-        context, 
+        context,
         MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     }
@@ -54,11 +46,11 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/logo.png', 
+              'assets/logo.png',
               width: 220,
               errorBuilder: (c, e, s) => const Icon(
-                Icons.book_rounded, 
-                size: 100, 
+                Icons.book_rounded,
+                size: 100,
                 color: Color(0xFF7B3FF2),
               ),
             ),

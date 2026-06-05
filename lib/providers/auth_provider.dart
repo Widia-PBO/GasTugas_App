@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gastugas_app/services/notification_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,12 +28,15 @@ class AuthProvider with ChangeNotifier {
   Future<void> _initGoogleSignIn() async {
     if (_initialized) return;
     _initialized = true;
-    await _googleSignIn.initialize();
+    await _googleSignIn.initialize(
+      serverClientId:
+          '436700117953-96lhabeub0hevf1vlhi4i6g5c80lsiu8.apps.googleusercontent.com',
+    );
     await _googleSignIn.attemptLightweightAuthentication();
   }
 
   Future<Map<String, dynamic>> authenticate({
-    required BuildContext context, // Wajib agar bisa update AppProvider
+    required BuildContext context,
     bool isGoogle = true,
     bool isRegister = false,
     String? email,
@@ -45,12 +49,9 @@ class AuthProvider with ChangeNotifier {
       Map<String, String> body = {};
 
       if (isGoogle) {
-        final GoogleSignInAccount? user = await _googleSignIn.authenticate();
-        if (user == null) {
-          return {"status": false, "message": "Login dibatalkan"};
-        }
-
+        final GoogleSignInAccount user = await _googleSignIn.authenticate();
         final GoogleSignInAuthentication auth = user.authentication;
+
         if (auth.idToken == null) {
           return {"status": false, "message": "Token Google gagal"};
         }
@@ -96,13 +97,20 @@ class AuthProvider with ChangeNotifier {
                 data['institusi']?.toString() ?? "Politeknik Negeri Indramayu");
             await prefs.setString(
                 'prodi', data['prodi']?.toString() ?? "Sistem Informasi");
+            if (data['id_user'] != null) {
+              int parsedIdUser = int.tryParse(data['id_user'].toString()) ?? 0;
+              if (parsedIdUser != 0) {
+                await NotificationService()
+                    .dapatkanDanSimpanToken(parsedIdUser);
+              }
+            }
 
             if (context.mounted) {
               await Provider.of<AppProvider>(context, listen: false)
                   .cekSessionLogin();
             }
           }
-          // PENTING: Return true di sini agar login dianggap berhasil
+
           return {"status": true, "message": resData['message'] ?? "Berhasil"};
         }
 
@@ -115,9 +123,14 @@ class AuthProvider with ChangeNotifier {
         "status": false,
         "message": "Server error: ${response.statusCode}"
       };
-    } catch (e) {
-      debugPrint("Error auth: $e");
-      return {"status": false, "message": "Kesalahan koneksi sistem"};
+    } catch (e, stackTrace) {
+      debugPrint("ERROR AUTH: $e");
+      debugPrint("STACK: $stackTrace");
+
+      return {
+        "status": false,
+        "message": e.toString(),
+      };
     }
   }
 

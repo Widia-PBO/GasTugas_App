@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:gastugas_app/services/api_service.dart';
+import 'package:gastugas_app/services/notification_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +18,6 @@ class AppProvider extends ChangeNotifier {
   String _prodiUserLoggedIn = "";
   bool _isLoading = false;
 
-  // Getters
   List<Tugas> get daftarTugasUtama => _daftarTugasUtama;
   String get namaUserLoggedIn => _namaUserLoggedIn;
   String get emailUserLoggedIn => _emailUserLoggedIn;
@@ -26,7 +27,6 @@ class AppProvider extends ChangeNotifier {
   bool get isUserLoggedIn => _idUserLoggedIn.isNotEmpty;
 
   // --- 1. MANAJEMEN SESI ---
-  // Di dalam file providers/app_provider.dart
   Future<void> cekSessionLogin() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -67,7 +67,6 @@ class AppProvider extends ChangeNotifier {
       );
 
       final resData = jsonDecode(response.body);
-      // REVISI: Menggunakan 'status' sesuai dengan register.php
       return resData['status'] == true;
     } catch (e) {
       debugPrint("Error Proses Registrasi Provider: $e");
@@ -111,7 +110,10 @@ class AppProvider extends ChangeNotifier {
 
         // 5. Ambil data tugas segera agar dashboard tidak kosong
         await ambilDataTugasDariMysql();
-
+        int parsedIdUser = int.tryParse(_idUserLoggedIn) ?? 0;
+        if (parsedIdUser != 0) {
+          await NotificationService().dapatkanDanSimpanToken(parsedIdUser);
+        }
         // 6. Notifikasi UI bahwa data telah berubah
         notifyListeners();
       }
@@ -129,15 +131,11 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await http.get(Uri.parse(
-          "${BaseUrl.url}/tugas.php?aksi=read&id_user=$_idUserLoggedIn"));
+      final resData = await ApiService.fetchTugas(_idUserLoggedIn);
 
-      if (response.statusCode == 200) {
-        final resData = jsonDecode(response.body);
-        if (resData['status'] == true) {
-          final List dataMentah = resData['data'];
-          _daftarTugasUtama = dataMentah.map((e) => Tugas.fromJson(e)).toList();
-        }
+      if (resData['status'] == true) {
+        final List dataMentah = resData['data'];
+        _daftarTugasUtama = dataMentah.map((e) => Tugas.fromJson(e)).toList();
       }
     } catch (e) {
       debugPrint("Error Ambil Data: $e");
@@ -147,21 +145,20 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  // 1. Fungsi tambahTugasBaru
   Future<bool> tambahTugasBaru(
       String judul, String matkul, String deadline, String deskripsi) async {
     try {
-      final response = await http.post(
-        Uri.parse("${BaseUrl.url}/tugas.php?aksi=create"),
-        body: {
-          "id_user": _idUserLoggedIn,
-          "judul": judul,
-          "mata_kuliah": matkul,
-          "deadline": deadline,
-          "deskripsi": deskripsi,
-          "status": "Belum dikerjakan" // Kirimkan status default
-        },
-      );
-      final resData = jsonDecode(response.body);
+      // Panggil ApiService
+      final resData = await ApiService.createTugas({
+        "id_user": _idUserLoggedIn,
+        "judul": judul,
+        "mata_kuliah": matkul,
+        "deadline": deadline,
+        "deskripsi": deskripsi,
+        "status": "Belum dikerjakan"
+      });
+
       if (resData['status'] == true) {
         await ambilDataTugasDariMysql();
         return true;
@@ -172,6 +169,7 @@ class AppProvider extends ChangeNotifier {
     return false;
   }
 
+  // 2. Fungsi perbaruiDataTugas
   Future<bool> perbaruiDataTugas({
     required String idTugas,
     required String judul,
@@ -181,91 +179,105 @@ class AppProvider extends ChangeNotifier {
     required String status,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse("${BaseUrl.url}/tugas.php?aksi=update"),
-        body: {
-          "id_tugas": idTugas,
-          "judul": judul,
-          "mata_kuliah": mataKuliah,
-          "deadline": deadline,
-          "deskripsi": deskripsi,
-          "status": status,
-        },
-      );
-      final resData = jsonDecode(response.body);
+      // Panggil ApiService
+      final resData = await ApiService.updateTugas({
+        "id_tugas": idTugas,
+        "judul": judul,
+        "mata_kuliah": mataKuliah,
+        "deadline": deadline,
+        "deskripsi": deskripsi,
+        "status": status,
+      });
+
       if (resData['status'] == true) {
         await ambilDataTugasDariMysql();
         return true;
       }
     } catch (e) {
-      debugPrint("Error Update Tugas: $e");
+      debugPrint("Error Update: $e");
     }
     return false;
   }
 
+  // 3. Fungsi hapusTugasPermanen
   Future<bool> hapusTugasPermanen(String idTugas) async {
     try {
-      final response = await http.post(
-        Uri.parse("${BaseUrl.url}/tugas.php?aksi=delete"),
-        body: {"id_tugas": idTugas},
-      );
-      final resData = jsonDecode(response.body);
+      // Cukup panggil ApiService!
+      final resData = await ApiService.deleteTugas({"id_tugas": idTugas});
+
       if (resData['status'] == true) {
         await ambilDataTugasDariMysql();
         return true;
       }
     } catch (e) {
-      debugPrint("Error Delete Permanen: $e");
+      debugPrint("Error Delete: $e");
     }
     return false;
   }
 
+  // 4. Fungsi tandaiTugasSelesai
   Future<bool> tandaiTugasSelesai(Tugas tgs) async {
     try {
-      final response = await http.post(
-        Uri.parse("${BaseUrl.url}/tugas.php?aksi=update"),
-        body: {
-          "id_tugas": tgs.idTugas,
-          "judul": tgs.judul,
-          "mata_kuliah": tgs.mataKuliah,
-          "deadline": tgs.deadline,
-          "deskripsi": tgs.deskripsi,
-          "status": "Selesai"
-        },
-      );
-      final resData = jsonDecode(response.body);
+      final resData = await ApiService.updateStatusTugas({
+        "id_tugas": tgs.idTugas,
+        "judul": tgs.judul,
+        "mata_kuliah": tgs.mataKuliah,
+        "deadline": tgs.deadline,
+        "deskripsi": tgs.deskripsi,
+        "status": "Selesai"
+      });
+
       if (resData['status'] == true) {
         await ambilDataTugasDariMysql();
         return true;
       }
     } catch (e) {
-      debugPrint("Error Selesai Tugas: $e");
+      debugPrint("Error Selesai: $e");
     }
     return false;
   }
 
-  // Tambahkan fungsi ini di AppProvider.dart
   Future<void> fetchProfilDariMysql(String email) async {
     try {
+      // Memastikan email dikirim dengan benar ke login.php
       final response = await http.post(
-        Uri.parse(
-            "${BaseUrl.url}/login.php"), // Bisa pakai file login yang sama
-        body: {
-          "email": email
-        }, // Pastikan login.php bisa mengembalikan data user by email
+        Uri.parse("${BaseUrl.url}/login.php"),
+        body: {"email": email},
       );
 
       final resData = jsonDecode(response.body);
-      if (resData['status'] == true) {
-        final data = resData['data'];
-        _institusiUserLoggedIn = data['institusi'];
-        _prodiUserLoggedIn = data['prodi'];
 
+      // Pastikan status benar dan data ada
+      if (resData['status'] == true && resData['data'] != null) {
+        final data = resData['data'];
+
+        // Update state provider
+        _idUserLoggedIn = data['id_user'].toString();
+        _namaUserLoggedIn = data['nama'] ?? "";
+        _emailUserLoggedIn = data['email'] ?? email;
+        _institusiUserLoggedIn =
+            data['institusi'] ?? "Politeknik Negeri Indramayu";
+        _prodiUserLoggedIn = data['prodi'] ?? "Sistem Informasi";
+
+        // Simpan ke SharedPreferences
         final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('id_user', _idUserLoggedIn);
+        await prefs.setString('nama', _namaUserLoggedIn);
+        await prefs.setString('email', _emailUserLoggedIn);
         await prefs.setString('institusi', _institusiUserLoggedIn);
         await prefs.setString('prodi', _prodiUserLoggedIn);
 
+        // Sinkronisasi Token FCM (supaya notifikasi jalan)
+        int parsedIdUser = int.tryParse(_idUserLoggedIn) ?? 0;
+        if (parsedIdUser != 0) {
+          await NotificationService().dapatkanDanSimpanToken(parsedIdUser);
+        }
+
+        // Ambil tugas setelah ID User tersedia
+        await ambilDataTugasDariMysql();
         notifyListeners();
+        debugPrint(
+            "Profil dan Tugas berhasil disinkronkan untuk: $_namaUserLoggedIn");
       }
     } catch (e) {
       debugPrint("Error Fetch Profil: $e");

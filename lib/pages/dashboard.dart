@@ -5,10 +5,8 @@ import 'tambah_tugas.dart';
 import 'detail_tugas.dart';
 import '../models/tugas_model.dart';
 
-// 1. Ubah ke StatefulWidget agar bisa memanggil fungsi saat halaman dibuka
 class DashboardPage extends StatefulWidget {
   final Function(int)? onNavigateToTab;
-
   const DashboardPage({super.key, this.onNavigateToTab});
 
   @override
@@ -16,10 +14,12 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final Color primaryUngu = const Color(0xFF7B3FF2);
+  final Color gradientUngu = const Color(0xFF9D67F5);
+
   @override
   void initState() {
     super.initState();
-    // 2. "Jaring Pengaman": Memastikan data ditarik setiap kali dashboard dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AppProvider>().ambilDataTugasDariMysql();
       context.read<AppProvider>().cekSessionLogin();
@@ -29,305 +29,153 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    final String formatHariIni = DateTime.now().toString().split(' ')[0];
 
-    final DateTime now = DateTime.now();
-    final String formatHariIni =
-        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-    // 1. Ambil semua yang BELUM selesai
-    final List<Tugas> semuaBelumSelesai = provider.daftarTugasUtama
+    final semua = provider.daftarTugasUtama
         .where((t) => t.status.toLowerCase() != 'selesai')
         .toList();
-
-// 2. Filter untuk "Tugas Hari Ini"
-    final List<Tugas> tugasHariIni =
-        semuaBelumSelesai.where((t) => t.deadline == formatHariIni).toList();
-
-// 3. Filter untuk "Daftar Tugas" (Sisa tugas yang bukan hari ini)
-    final List<Tugas> daftarTugasLain =
-        semuaBelumSelesai.where((t) => t.deadline != formatHariIni).toList();
+    final hariIni = semua.where((t) => t.deadline == formatHariIni).toList();
+    final lainnya = semua.where((t) => t.deadline != formatHariIni).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8FF),
-      body: SafeArea(
-        child: provider.isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF7B3FF2)))
-            : RefreshIndicator(
-                onRefresh: () => provider.ambilDataTugasDariMysql(),
-                color: const Color(0xFF7B3FF2),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // HEADER
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+      appBar: AppBar(
+        backgroundColor: primaryUngu,
+        elevation: 0,
+        title: const Text("GasTugas",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GestureDetector(
+              onTap: () => widget.onNavigateToTab?.call(2),
+              child: CircleAvatar(
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                child: Text(
+                    provider.namaUserLoggedIn.isNotEmpty
+                        ? provider.namaUserLoggedIn[0].toUpperCase()
+                        : 'U',
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          )
+        ],
+      ),
+      body: provider.isLoading
+          ? Center(child: CircularProgressIndicator(color: primaryUngu))
+          : RefreshIndicator(
+              onRefresh: () => provider.ambilDataTugasDariMysql(),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- WELCOME GRADIENT CARD ---
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient:
+                            LinearGradient(colors: [primaryUngu, gradientUngu]),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset('assets/logo2.png',
-                              height: 100,
-                              fit: BoxFit.contain,
-                              errorBuilder: (c, e, s) => const Text('GasTugas',
-                                  style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF7B3FF2)))),
-                          const Spacer(),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                    Icons.notifications_none_rounded,
-                                    color: Colors.black87,
-                                    size: 26),
-                                onPressed: () => ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                        content: Text(
-                                            "Fitur Notifikasi segera hadir! 🔔"))),
-                              ),
-                              const SizedBox(width: 14),
-                              GestureDetector(
-                                onTap: () => widget.onNavigateToTab?.call(2),
-                                child: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: const Color(0xFF7B3FF2),
-                                  child: Text(
-                                    provider.namaUserLoggedIn.isNotEmpty
-                                        ? provider.namaUserLoggedIn[0]
-                                            .toUpperCase()
-                                        : 'U',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          Text(
+                              'Halo, ${provider.namaUserLoggedIn.split(' ')[0]}! 👋',
+                              style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                          const SizedBox(height: 8),
+                          const Text(
+                              'Waktunya produktif hari ini.\nTetap semangat ya! ✨',
+                              style: TextStyle(
+                                  fontSize: 13, color: Colors.white70)),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Halo, ${provider.namaUserLoggedIn.isNotEmpty ? provider.namaUserLoggedIn : "User"} 👋',
-                        style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4A3764)),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // LIST TUGAS HARI INI
-                      const Text('Tugas Hari Ini',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87)),
-                      const SizedBox(height: 10),
-                      _buildCardContainer(
-                          tugasHariIni, formatHariIni), // <--- Ini yang duluan
-
-                      const SizedBox(height: 25),
-
-                      // LIST SEMUA TUGAS (Daftar Tugas)
-                      const Text('Daftar Tugas',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87)),
-                      const SizedBox(height: 10),
-                      _buildCardContainer(daftarTugasLain,
-                          formatHariIni), // <--- Ini yang setelahnya
-                      const SizedBox(height: 80),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 30),
+                    _buildSectionTitle('Tugas Hari Ini'),
+                    const SizedBox(height: 16),
+                    _buildCardList(hariIni, formatHariIni),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('Daftar Tugas Lainnya'),
+                    const SizedBox(height: 16),
+                    _buildCardList(lainnya, formatHariIni),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
-      ),
+            ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF7B3FF2),
-        elevation: 3,
+        backgroundColor: primaryUngu,
         shape: const CircleBorder(),
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (context) => const TambahTugasPage())),
-        child: const Icon(Icons.add, color: Colors.white, size: 26),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
   }
 
-  Widget _buildCardContainer(List<Tugas> list, String today) {
+  Widget _buildSectionTitle(String title) => Text(title,
+      style: const TextStyle(
+          fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF2D2543)));
+
+  Widget _buildCardList(List<Tugas> list, String today) {
+    if (list.isEmpty) {
+      return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          alignment: Alignment.center,
+          child: const Text("Belum ada tugas",
+              style: TextStyle(color: Colors.black38)));
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: list.length,
+      itemBuilder: (context, i) =>
+          _buildModernCard(list[i], list[i].deadline == today),
+    );
+  }
+
+  Widget _buildModernCard(Tugas tugas, bool isToday) {
+    final Color accentColor =
+        isToday ? const Color(0xFFFF4B4B) : const Color(0xFF4CAF50);
+    final Color bgColor = isToday
+        ? const Color(0xFFFF4B4B).withValues(alpha: 0.1)
+        : const Color(0xFF4CAF50).withValues(alpha: 0.1);
+
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFECE9F5)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
       ),
-      child: list.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.all(10),
-              child: Center(
-                  child: Text('Belum ada tugas',
-                      style: TextStyle(color: Colors.black38))))
-          : ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: list.length,
-              itemBuilder: (context, i) => _buildInnerTaskRow(
-                  context, list[i], list[i].deadline == today),
-            ),
-    );
-  }
-
-  // ====================================================================
-  // REVISI FINAL: BARIS INTERNAL TUGAS YANG MEMILIKI STATUS SESUAI DATA
-  // ====================================================================
-  Widget _buildInnerTaskRow(BuildContext context, Tugas tugas, bool isToday) {
-    // Logika pewarnaan bulatan indikator: Hari Ini -> Merah, Belum Hari Ini -> Hijau
-    Color dotColor =
-        isToday ? const Color(0xFFFF4B4B) : const Color(0xFF4CAF50);
-    const Color rowBgColor =
-        Color(0xFFF5EFFF); // Warna soft background ungu muda asli gambar
-
-    // Penentuan warna dinamis teks dan background untuk Badge Status kecil sesuai datanya
-    Color statusTextColor = tugas.status.toLowerCase() == 'sedang dikerjakan'
-        ? const Color(0xFF2196F3) // Biru cerah progres
-        : const Color(0xFFFFA000); // Oranye pending
-    Color statusBgColor = tugas.status.toLowerCase() == 'sedang dikerjakan'
-        ? const Color(0xFFE3F2FD)
-        : const Color(0xFFFFF3E0);
-
-    // Format tampilan teks tanggal singkat (Misal: 21 Mei / 24 Mei)
-    String tanggalTampil = tugas.deadline;
-    try {
-      List<String> splitDate = tugas.deadline.split('-');
-      if (splitDate.length == 3) {
-        int bulanInt = int.parse(splitDate[1]);
-        List<String> namaBulan = [
-          '',
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'Mei',
-          'Jun',
-          'Jul',
-          'Agu',
-          'Sep',
-          'Okt',
-          'Nov',
-          'Des'
-        ];
-        tanggalTampil = "${int.parse(splitDate[2])} ${namaBulan[bulanInt]}";
-      }
-    } catch (_) {}
-
-    return GestureDetector(
-      onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => DetailTugasPage(tugas: tugas))),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: rowBgColor,
-          borderRadius: BorderRadius.circular(12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => DetailTugasPage(tugas: tugas))),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+              color: bgColor, borderRadius: BorderRadius.circular(12)),
+          child: Icon(Icons.assignment_rounded, color: accentColor, size: 20),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 1. Bulatan Polos Berwarna (Merah / Hijau)
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // 2. Judul Tugas + Badge Status Di Bawahnya (Sesuai Datanya)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tugas.judul,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14.5,
-                      color: Color(0xFF2D2543),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Baris Tambahan: Nama Mata Kuliah & Kapsul Badge Status Asli dari Data MySQL
-                  Row(
-                    children: [
-                      Text(
-                        tugas.mataKuliah,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.black45,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // BADGE STATUS DINAMIS DI SETIAP CARD
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: statusBgColor,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          tugas
-                              .status, // Menampilkan teks status asli ('Belum dikerjakan' / 'Sedang dikerjakan')
-                          style: TextStyle(
-                            color: statusTextColor,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // 3. Tanggal Batas Waktu Singkat + Panah Chevron Detail
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  tanggalTampil,
-                  style: const TextStyle(
-                    color: Colors.black38,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.black26,
-                  size: 18,
-                ),
-              ],
-            ),
-          ],
-        ),
+        title: Text(tugas.judul,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14.5,
+                color: Color(0xFF2D2543))),
+        subtitle: Text("${tugas.mataKuliah} • ${tugas.status}",
+            style: const TextStyle(fontSize: 11.5)),
+        trailing:
+            const Icon(Icons.chevron_right, size: 20, color: Colors.black26),
       ),
     );
   }

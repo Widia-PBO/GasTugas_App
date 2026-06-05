@@ -16,7 +16,6 @@ class _TambahTugasPageState extends State<TambahTugasPage> {
   final TextEditingController _deskripsiCtrl = TextEditingController();
   String _statusSelected = 'Belum dikerjakan';
 
-  // [MATERI 3: ASYNCHRONOUS PROGRAMMING] Muncul kalender secara async
   Future<void> _pilihTanggal(BuildContext context) async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -27,9 +26,9 @@ class _TambahTugasPageState extends State<TambahTugasPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF7B3FF2), 
-              onPrimary: Colors.white, 
-              onSurface: Colors.black, 
+              primary: Color(0xFF7B3FF2),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
             ),
           ),
           child: child!,
@@ -49,10 +48,11 @@ class _TambahTugasPageState extends State<TambahTugasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Background putih clean asli
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Tambah Tugas', style: TextStyle(fontWeight: FontWeight.bold)), 
-        backgroundColor: const Color(0xFF7B3FF2), 
+        title: const Text('Tambah Tugas',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF7B3FF2),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -61,22 +61,21 @@ class _TambahTugasPageState extends State<TambahTugasPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // [MATERI 1 & 2: FLUTTER DASAR & LANJUT] Layout Form Kotak Ungu Polos
             _buildField(_judulCtrl, 'Judul Tugas', Icons.book),
             const SizedBox(height: 15),
             _buildField(_matkulCtrl, 'Mata Kuliah', Icons.school),
             const SizedBox(height: 15),
-            
             TextField(
               controller: _deadlineCtrl,
-              readOnly: true, 
-              onTap: () => _pilihTanggal(context), 
+              readOnly: true,
+              onTap: () => _pilihTanggal(context),
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFF7B3FF2)),
+                prefixIcon:
+                    const Icon(Icons.calendar_today, color: Color(0xFF7B3FF2)),
                 labelText: 'Deadline',
                 labelStyle: const TextStyle(color: Colors.black45),
                 filled: true,
-                fillColor: const Color(0xFFF3EFFF), // Warna ungu muda asli GasTugas
+                fillColor: const Color(0xFFF3EFFF),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
@@ -86,78 +85,85 @@ class _TambahTugasPageState extends State<TambahTugasPage> {
             const SizedBox(height: 15),
             _buildField(_deskripsiCtrl, 'Deskripsi', null, maxLines: 3),
             const SizedBox(height: 20),
-            
             const Text(
-              'Status Tugas', 
-              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4A4557), fontSize: 14),
+              'Status Tugas',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A4557),
+                  fontSize: 14),
             ),
             const SizedBox(height: 8),
-            
-            // FIXED SOLUSI TOTAL 0 ERROR: Properti filled & fillColor dipindah ke dalam inputDecorationTheme dengan benar
             DropdownMenu<String>(
               initialSelection: _statusSelected,
-              width: MediaQuery.of(context).size.width - 40, // Lebar penuh sesuai padding layar
+              width: MediaQuery.of(context).size.width - 40,
               inputDecorationTheme: InputDecorationTheme(
-                filled: true, // FIXED
-                fillColor: const Color(0xFFF3EFFF), // FIXED: Warna ungu muda senada agar tidak nabrak
+                filled: true,
+                fillColor: const Color(0xFFF3EFFF),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
               onSelected: (String? value) {
                 if (value != null) {
                   setState(() {
-                    _statusSelected = value; // Tetap mengubah state lokal secara dinamis
+                    _statusSelected = value;
                   });
                 }
               },
               dropdownMenuEntries: const [
                 DropdownMenuEntry<String>(
-                  value: 'Belum dikerjakan', 
+                  value: 'Belum dikerjakan',
                   label: 'Belum dikerjakan',
-                  leadingIcon: Icon(Icons.radio_button_checked, color: Color(0xFF7B3FF2)),
+                  leadingIcon: Icon(Icons.radio_button_checked,
+                      color: Color(0xFF7B3FF2)),
                 ),
                 DropdownMenuEntry<String>(
-                  value: 'Sedang dikerjakan', 
+                  value: 'Sedang dikerjakan',
                   label: 'Sedang dikerjakan',
-                  leadingIcon: Icon(Icons.hourglass_bottom, color: Colors.orangeAccent),
+                  leadingIcon:
+                      Icon(Icons.hourglass_bottom, color: Colors.orangeAccent),
                 ),
               ],
             ),
-            
             const SizedBox(height: 35),
-            
-            // Tombol Simpan Kapsul Ungu Asli GasTugas
             SizedBox(
-              width: double.infinity, 
+              width: double.infinity,
               height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7B3FF2), 
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  backgroundColor: const Color(0xFF7B3FF2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
                 ),
                 onPressed: () async {
-                  if (_judulCtrl.text.isEmpty || _matkulCtrl.text.isEmpty || _deadlineCtrl.text.isEmpty) {
+                  if (_judulCtrl.text.isEmpty ||
+                      _matkulCtrl.text.isEmpty ||
+                      _deadlineCtrl.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Harap isi Judul, Mata Kuliah, dan Deadline!")),
+                      const SnackBar(
+                          content: Text(
+                              "Harap isi Judul, Mata Kuliah, dan Deadline!")),
                     );
                     return;
                   }
-                  
-                  // [MATERI 5 & 6: CRUD CREATE & PROVIDER] Mengirim data asinkron ke server PHP Laragon
-                  final sukses = await context.read<AppProvider>().tambahTugasBaru(
-                    _judulCtrl.text,
-                    _matkulCtrl.text,
-                    _deadlineCtrl.text,
-                    _deskripsiCtrl.text,
-                  );
+
+                  final sukses =
+                      await context.read<AppProvider>().tambahTugasBaru(
+                            _judulCtrl.text,
+                            _matkulCtrl.text,
+                            _deadlineCtrl.text,
+                            _deskripsiCtrl.text,
+                          );
 
                   if (context.mounted) {
                     if (sukses) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Tugas berhasil disimpan ke server!")),
+                        const SnackBar(
+                            content:
+                                Text("Tugas berhasil disimpan ke server!")),
                       );
                       Navigator.pop(context);
                     } else {
@@ -168,8 +174,11 @@ class _TambahTugasPageState extends State<TambahTugasPage> {
                   }
                 },
                 child: const Text(
-                  'Simpan Tugas', 
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  'Simpan Tugas',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
                 ),
               ),
             ),
@@ -179,18 +188,20 @@ class _TambahTugasPageState extends State<TambahTugasPage> {
     );
   }
 
-  Widget _buildField(TextEditingController ctrl, String label, IconData? icon, {int maxLines = 1}) {
+  Widget _buildField(TextEditingController ctrl, String label, IconData? icon,
+      {int maxLines = 1}) {
     return TextField(
-      controller: ctrl, 
+      controller: ctrl,
       maxLines: maxLines,
       decoration: InputDecoration(
-        prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF7B3FF2)) : null, 
-        labelText: label, 
+        prefixIcon:
+            icon != null ? Icon(icon, color: const Color(0xFF7B3FF2)) : null,
+        labelText: label,
         labelStyle: const TextStyle(color: Colors.black45),
-        filled: true, 
-        fillColor: const Color(0xFFF3EFFF), 
+        filled: true,
+        fillColor: const Color(0xFFF3EFFF),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15), 
+          borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
         ),
       ),

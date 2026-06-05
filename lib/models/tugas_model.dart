@@ -1,6 +1,6 @@
 class Tugas {
   final String idTugas;
-  final String idUser; // Tambahkan ini agar sinkron dengan database
+  final String idUser; 
   final String judul;
   final String mataKuliah;
   final String deadline;
@@ -17,8 +17,6 @@ class Tugas {
     required this.status,
   });
 
-  // [MATERI 5: CRUD & JSON MAPPING] 
-  // Pastikan key di dalam json['...'] sama persis dengan nama kolom di database MySQL
   factory Tugas.fromJson(Map<String, dynamic> json) {
     return Tugas(
       idTugas: json['id_tugas']?.toString() ?? '',

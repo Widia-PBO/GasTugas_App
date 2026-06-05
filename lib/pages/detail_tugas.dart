@@ -21,7 +21,6 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
   String _statusTerbaru = 'Belum dikerjakan';
   final List<String> _opsiStatus = ['Belum dikerjakan', 'Sedang dikerjakan'];
 
-  // Kumpulan kata motivasi acak untuk pop-up sukses
   final List<String> _listMotivasi = [
     "Sedikit demi sedikit tugasmu akan selesai.",
     "Hebat banget! Satu beban hidup perkuliahan resmi sirna! ✨🚀",
@@ -67,9 +66,7 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
     }
   }
 
-  // ==========================================
-  // POP-UP DIALOG MOTIVASI SESUAI IMAGE_17706A.PNG
-  // ==========================================
+  // POP-UP DIALOG MOTIVASI
   void _tampilkanPopUpSukses(BuildContext context, String kalimatMotivasi) {
     showDialog(
       context: context,
@@ -85,7 +82,7 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'POPUP MOTIVASI',
+                  'KATA-KATA HARI INI',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -149,7 +146,7 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
   void _tampilkanDialogHapus(BuildContext context, AppProvider provider) {
     showDialog(
       context: context,
-      barrierDismissible: true, // Bisa ditutup dengan klik area luar
+      barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return Dialog(
           shape:
@@ -160,7 +157,6 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Ikon Sampah dengan background soft red
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
@@ -213,7 +209,7 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         onPressed: () async {
-                          Navigator.pop(dialogContext); // Tutup dialog
+                          Navigator.pop(dialogContext);
                           bool sukses = await provider
                               .hapusTugasPermanen(widget.tugas.idTugas);
                           if (context.mounted) {
@@ -261,12 +257,6 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
-              Image.asset(
-                'assets/logo.png',
-                height: 90,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 10),
               const Text(
                 'Detail Tugas',
                 style: TextStyle(
@@ -374,19 +364,14 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // ==========================================
                     // REVISI: TOMBOL EDIT & HAPUS SAMA PANJANG LEBAR (SIMETRIS)
-                    // ==========================================
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Button Hapus (Kotak Simetris)
                         Expanded(
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical:
-                                      14), // Di-matching agar tinggi seimbang
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               side: const BorderSide(
                                   color: Color(0xFFFFD1D1), width: 1.5),
                               shape: RoundedRectangleBorder(
@@ -399,10 +384,9 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
                                 color: Colors.redAccent, size: 24),
                           ),
                         ),
-                        const SizedBox(
-                            width: 16), // Jarak renggang estetik di tengah
+                        const SizedBox(width: 16),
 
-                        // Button Simpan Edit (Kotak Simetris - Sama Lebar 50:50 dengan tombol Hapus)
+                        // Button Simpan Edit
                         Expanded(
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
@@ -459,20 +443,34 @@ class _DetailTugasPageState extends State<DetailTugasPage> {
                               borderRadius: BorderRadius.circular(24)),
                           elevation: 0,
                         ),
+
+                        // REVISI TOMBOL UTAMA: TANDAI SELESAI UNTUK MEMICU NOTIFIKASI REAL-TIME
                         onPressed: () async {
-                          bool sukses =
-                              await provider.tandaiTugasSelesai(widget.tugas);
+                          // 1. Kirim data terbaru ke Laragon dengan status "Selesai" agar memicu FCM
+                          bool sukses = await provider.perbaruiDataTugas(
+                            idTugas: widget.tugas.idTugas,
+                            judul: _judulController.text,
+                            mataKuliah: _matkulController.text,
+                            deadline: _deadlineController.text,
+                            deskripsi: _deskripsiController.text,
+                            status: "Selesai",
+                          );
+
                           if (context.mounted) {
                             if (sukses) {
+                              // 2. Ambil kalimat motivasi acak untuk pop-up di aplikasi
                               final random = Random();
                               String kalimatSemangat = _listMotivasi[
                                   random.nextInt(_listMotivasi.length)];
+
+                              // 3. Tampilkan pop-up sukses di layar
                               _tampilkanPopUpSukses(context, kalimatSemangat);
                             } else {
+                              // Jika koneksi ke Laragon atau database gagal
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text(
-                                        "Gagal memproses penyelesaian tugas.")),
+                                        "Gagal memproses penyelesaian tugas. Cek koneksi Laragon!")),
                               );
                             }
                           }

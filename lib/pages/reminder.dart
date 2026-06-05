@@ -1,196 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:gastugas_app/models/tugas_model.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'tambah_tugas.dart';
 import 'detail_tugas.dart';
+import '../models/tugas_model.dart';
 
 class ReminderPage extends StatelessWidget {
   const ReminderPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // [MATERI: PROVIDER GLOBAL STATE MANAGEMENT] Sinkronisasi state daftar tugas secara terpusat
-    // 1. Di dalam method build, ambil data yang sudah difilter
+    // Sinkronisasi state daftar tugas secara terpusat
     final provider = context.watch<AppProvider>();
 
-// Kita ambil semua tugas yang statusnya BUKAN 'selesai'
+    // Filter tugas yang belum selesai
     final List<Tugas> daftarReminder = provider.daftarTugasUtama
         .where((t) => t.status.toLowerCase() != 'selesai')
         .toList();
 
-// 2. Gunakan 'daftarReminder' di ListView.builder kamu
-    // Tambahkan fungsi ini agar error hilang
-
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF9F8FF), // Latar belakang ungu pastel super soft
+      backgroundColor: const Color(0xFFF9F8FF),
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(
-                height:
-                    24), // Memberi ruang napas yang rapi di area paling atas layar
+            const SizedBox(height: 32),
 
-            // ====================================================================
-            // 1. UTAMA PALING ATAS: LOGO GASTUGAS PAS DI TENGAH-TENGAH LAYAR (CLEAN TOTAL)
-            // ====================================================================
-            Align(
-              alignment:
-                  Alignment.center, // Memaksa logo berada tepat di tengah layar
+            // --- LOGO GASTUGAS ---
+            Center(
               child: Image.asset(
                 'assets/logo.png',
-                height:
-                    150, // Tinggi ideal logo vertikal agar proporsional dan rapi
+                height: 120,
                 fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => const Text(
-                  'GasTugas',
-                  style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7B3FF2)),
-                ),
+                errorBuilder: (c, e, s) => const Text('GasTugas',
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF7B3FF2))),
               ),
             ),
+            const SizedBox(height: 24),
 
-            // ====================================================================
-            // 2. DI BAWAH LOGO: SUB-JUDUL "Reminder Tugas" + LONCENG UNGU
-            // ====================================================================
+            // --- JUDUL REMINDER ---
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  Icon(Icons.notifications_active_outlined,
-                      color: Color(0xFF7B3FF2), size: 26), // Ikon lonceng
+                  Icon(Icons.notifications_active_rounded,
+                      color: Color(0xFF7B3FF2), size: 24),
                   SizedBox(width: 10),
                   Text(
                     'Reminder Tugas',
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A3E65), // Warna ungu gelap anggun
-                      letterSpacing: -0.5,
+                      color: Color(0xFF4A3E65),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 16),
 
-            // ====================================================================
-            // KONTEN UTAMA: DAFTAR LIST REMINDER DENGAN ISI CARD LENGKAP DATA ASLI
-            // ====================================================================
+            // --- DAFTAR LIST REMINDER ---
             Expanded(
-              child: daftarReminder
-                      .isEmpty // 1. Gunakan daftarReminder hasil filter
+              child: daftarReminder.isEmpty
                   ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.alarm_off_rounded,
-                              color: Colors.black26, size: 44),
+                              color: Colors.black26, size: 48),
                           SizedBox(height: 12),
-                          Text('Belum ada alarm reminder aktif.',
+                          Text('Belum ada alarm aktif.',
                               style: TextStyle(
-                                  color: Colors.black38,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500)),
+                                  color: Colors.black38, fontSize: 14)),
                         ],
                       ),
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: daftarReminder
-                          .length, // 2. Gunakan length dari daftarReminder
+                      itemCount: daftarReminder.length,
                       itemBuilder: (context, index) {
-                        final item = daftarReminder[
-                            index]; // 3. Ambil item dari daftarReminder
-
-                        // (Logika statusTextColor dan statusBgColor kamu tetap sama di sini)
-                        Color statusTextColor =
-                            item.status.toLowerCase() == 'sedang dikerjakan'
-                                ? const Color(0xFF2196F3)
-                                : const Color(0xFFFFA000);
-                        Color statusBgColor =
-                            item.status.toLowerCase() == 'sedang dikerjakan'
-                                ? const Color(0xFFE3F2FD)
-                                : const Color(0xFFFFF3E0);
-
-                        return GestureDetector(
-                          onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      DetailTugasPage(tugas: item))),
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border:
-                                  Border.all(color: const Color(0xFFECE9F5)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.alarm_on_rounded,
-                                    color: Color(0xFF7B3FF2), size: 22),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.judul,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15,
-                                              color: Color(0xFF2D2543))),
-                                      const SizedBox(height: 4),
-                                      // (Badge status dan Deadline tetap sama seperti kodinganmu)
-                                      Row(
-                                        children: [
-                                          Text(item.mataKuliah,
-                                              style: const TextStyle(
-                                                  color: Colors.black45,
-                                                  fontSize: 11.5,
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 1.5),
-                                            decoration: BoxDecoration(
-                                                color: statusBgColor,
-                                                borderRadius:
-                                                    BorderRadius.circular(6)),
-                                            child: Text(item.status,
-                                                style: TextStyle(
-                                                    color: statusTextColor,
-                                                    fontSize: 9,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.chevron_right_rounded,
-                                    color: Colors.black26, size: 20),
-                              ],
-                            ),
-                          ),
-                        );
+                        final item = daftarReminder[index];
+                        return _buildReminderCard(context, item);
                       },
                     ),
             ),
 
-            // ====================================================================
-            // UTILITY BAWAH: BUTTON TAMBAH TUGAS KAPSUL UNGU POLOS CLEAN
-            // ====================================================================
+            // --- TOMBOL TAMBAH TUGAS ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.all(20),
               child: SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -198,8 +97,7 @@ class ReminderPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7B3FF2),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                        borderRadius: BorderRadius.circular(30)),
                     elevation: 0,
                   ),
                   onPressed: () => Navigator.push(
@@ -209,18 +107,52 @@ class ReminderPage extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.add_rounded,
                       color: Colors.white, size: 22),
-                  label: const Text(
-                    'Tambah Tugas Baru',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
-                  ),
+                  label: const Text('Tambah Tugas Baru',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15)),
                 ),
               ),
-            )
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Widget kartu reminder
+  Widget _buildReminderCard(BuildContext context, Tugas item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFECE9F5)),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => DetailTugasPage(tugas: item))),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+              color: const Color(0xFFF5EFFF),
+              borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.alarm_on_rounded,
+              color: Color(0xFF7B3FF2), size: 20),
+        ),
+        title: Text(item.judul,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14.5,
+                color: Color(0xFF2D2543))),
+        subtitle: Text("${item.mataKuliah} • ${item.status}",
+            style: const TextStyle(fontSize: 11.5)),
+        trailing:
+            const Icon(Icons.chevron_right, size: 20, color: Colors.black26),
       ),
     );
   }

@@ -13,7 +13,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // 2. "Jaring Pengaman": Memastikan data di-refresh saat halaman dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AppProvider>().cekSessionLogin();
     });
@@ -21,10 +20,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    // [MATERI: PROVIDER GLOBAL STATE MANAGEMENT] Sinkronisasi data secara real-time
     final provider = context.watch<AppProvider>();
 
-    // TAMBAHKAN BARIS INI untuk cek di Debug Console VS Code
     debugPrint("DEBUG PROFIL - Nama: ${provider.namaUserLoggedIn}");
     debugPrint("DEBUG PROFIL - Institusi: ${provider.institusiUserLoggedIn}");
     debugPrint("DEBUG PROFIL - Prodi: ${provider.prodiUserLoggedIn}");
@@ -34,12 +31,9 @@ class _ProfilePageState extends State<ProfilePage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- 1. PREMIUM GRADIENT HEADER CANVAS WITH AVATAR (COMPACT CLEAN VERSION) ---
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.only(
-                  top: 65,
-                  bottom: 30), // Padding disesuaikan agar lebih ringkas & pas
+              padding: const EdgeInsets.only(top: 65, bottom: 30),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
@@ -63,7 +57,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: Column(
                 children: [
-                  // Avatar Lingkaran dengan Ring Border Ganda yang Estetik
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
@@ -92,8 +85,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 14),
-
-                  // Nama Besar Pengguna
                   Text(
                     provider.namaUserLoggedIn.isNotEmpty
                         ? provider.namaUserLoggedIn
@@ -105,8 +96,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 6),
-
-                  // Email Badge Minimalis
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -148,7 +137,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  // Card Konten Utama Tunggal yang Clean & Lembut
+                  // Card Konten Utama Tunggal
                   Container(
                     width: double.infinity,
                     padding:
@@ -194,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 35),
 
-                  // --- 3. ERGONOMIS LOGOUT ACTION BUTTON ---
+                  // 3. LOGOUT ACTION BUTTON
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -239,12 +228,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Divider halus antar baris data
   Widget _buildCustomDivider() {
     return const Divider(color: Color(0xFFF6F5FA), height: 1, thickness: 1);
   }
 
-  // Widget baris data profil yang presisi dan seimbang
   Widget _buildIdentityRow(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),

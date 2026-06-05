@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart'; // Pastikan import AuthProvider
+import '../providers/auth_provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -44,7 +44,6 @@ class _RegisterPageState extends State<RegisterPage> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
     // Gunakan fungsi authenticate dengan isRegister: true agar mengarah ke register.php
-    // Di dalam register.dart, update _handleRegister:
     final result = await auth.authenticate(
       context: context,
       isGoogle: false,
@@ -148,6 +147,26 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: const Text('Daftar Sekarang',
                           style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Sudah punya akun? '),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Masuk',
+                          style: TextStyle(
+                            color: Color(0xFF7B3FF2),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
