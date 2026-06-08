@@ -149,17 +149,37 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 15),
 
               // 2. TOMBOL LANJUTKAN DENGAN GOOGLE
+              // 2. TOMBOL LANJUTKAN DENGAN GOOGLE
               SizedBox(
                 width: double.infinity,
                 height: 52,
-                child: OutlinedButton.icon(
+                child: OutlinedButton(
+                  // Kita gunakan OutlinedButton biasa agar lebih fleksibel
                   onPressed: () => _handleGoogleLogin(context),
-                  icon: const Icon(Icons.login, color: Color(0xFF7B3FF2)),
-                  label: const Text("Lanjutkan dengan Google"),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF7B3FF2)),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/google_3.png',
+                        height: 24,
+                        width: 24,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.login,
+                            color: Color(
+                                0xFF7B3FF2)),
+                      ),
+                      const SizedBox(width: 12), 
+                      const Text(
+                        "Lanjutkan dengan Google",
+                        style:
+                            TextStyle(color: Color(0xFF7B3FF2), fontSize: 16),
+                      ),
+                    ],
                   ),
                 ),
               ),
